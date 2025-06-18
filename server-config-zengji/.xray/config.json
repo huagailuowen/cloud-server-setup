@@ -1,0 +1,136 @@
+{
+  "log": {
+    "loglevel": "warning",
+     "error": "error.log",
+     "access": "access.log",
+    "dnsLog": true
+  },
+  "dns": {
+    "hosts": {
+      "domain:github.com" : ["140.82.121.4", "140.82.121.3"]
+    },
+    "servers": [
+      // "obfs+local://[2001:4860:4860::8888]",
+      // "obfs+local://dns.google",
+      "obfs+local://8.8.8.8",
+      "localhost"
+    ]
+  },
+  "inbounds": [
+    {
+      "port": "1080",
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "udp": true
+      }
+    },
+    {
+      "port": "1081",
+      "protocol": "http",
+      "settings": {}
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "protocol": "socks",
+      "settings": {
+        "servers": [
+          {
+            "address": "172.16.2.100",
+            "port": 8888
+          }
+        ]
+      },
+      "proxySettings" : {
+        "tag": "apex"
+      }
+    },
+    {
+      "tag": "direct",
+      "protocol": "freedom",
+      "settings": {
+        "domainStrategy": "UseIP"
+      }
+    },
+    {
+      "tag": "direct-obfs",
+      "protocol": "freedom",
+      "settings": {
+        "domainStrategy": "UseIP",
+        "fragment": {
+          "packets": "tlshello3",
+          "length": "120-220",
+          "interval": "0-0"
+        }
+      }
+    },
+    {
+      "tag": "apex",
+      "protocol": "vmess",
+      "settings": {
+        "vnext": [
+          {
+            "address": "apex.sjtu.edu.cn",
+            "port": 443,
+            "users": [
+              {
+                "id": "980a3ae5-9d0f-40af-a279-519959e3ba89",
+                "security": "auto"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": {
+          "path": "/apexlab_mess"
+        },
+        "security": "tls",
+        "tlsSettings": {
+          "serverName": "apex.sjtu.edu.cn"
+        }
+      }
+    }
+  ],
+  "routing": {
+    "domainStrategy": "IPOnDemand",
+    "rules": [
+      {
+        "outboundTag": "direct",
+        "domain": [
+          "geosite:cn",
+          "geosite:tld-cn",
+          "domain:internal",
+          "domain:cursor.sh",
+          "geosite:private",
+          "domain:alipay.com"
+        ]
+      },
+      {
+        "domain": [
+          "domain:workers.dev",
+          "domain:docker.com",
+          "domain:docker.io",
+          "domain:huggingface.co",
+          "domain:hf.space",
+          "domain:hf.co",
+          "domain:dl-cdn.alpinelinux.org"
+          // "domain:githubusercontent.com",
+          // "domain:steamcommunity.com",
+          // "domain:github.com"
+        ],
+        "outboundTag": "direct-obfs"
+      },
+      {
+        "outboundTag": "direct",
+        "ip": [
+          "geoip:cn",
+          "geoip:private"
+        ]
+      }
+    ]
+  }
+}
