@@ -1,0 +1,43 @@
+{
+  "log": {
+    "level": "info"
+  },
+  "dns": {
+    "servers": [
+      {
+        "address": "tls://8.8.8.8"
+      }
+    ]
+  },
+  "inbounds": [
+    {
+      "type": "shadowsocks",
+      "listen": "::",
+      "listen_port": 62608,
+      "sniff": true,
+      "network": "tcp",
+      "method": "2022-blake3-aes-128-gcm",
+      "password": "0ZyWm9T22bnxMAd2KUTLPA==",
+      "multiplex": {
+        "enabled": true
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct"
+    },
+    {
+      "type": "dns",
+      "tag": "dns-out"
+    }
+  ],
+  "route": {
+    "rules": [
+      {
+        "protocol": "dns",
+        "outbound": "dns-out"
+      }
+    ]
+  }
+}
