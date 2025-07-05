@@ -2,41 +2,118 @@
   "log": {
     "level": "info"
   },
+  "experimental": {
+    "cache_file": {
+      "enabled": true
+    }
+  },
   "dns": {
     "servers": [
       {
-        "address": "tls://8.8.8.8"
+        "tag": "dns-direct",
+        "address": "223.5.5.5",
+        "detour": "direct"
+      },
+      {
+        "tag": "dns-proxy",
+        "address": "8.8.8.8",
+        "detour": "proxy"
+      }
+    ],
+    "rules": [
+      {
+        "rule_set": "geosite-geolocation-cn",
+        "server": "dns-direct"
+      },
+      {
+        "rule_set": "geosite-geolocation-!cn",
+        "server": "dns-proxy"
       }
     ]
   },
   "inbounds": [
     {
-      "type": "shadowsocks",
-      "listen": "::",
-      "listen_port": 62608,
+      "type": "mixed",
+      "listen": "127.0.0.1",
+      "listen_port": 1080,
       "sniff": true,
-      "network": "tcp",
-      "method": "2022-blake3-aes-128-gcm",
-      "password": "0ZyWm9T22bnxMAd2KUTLPA==",
-      "multiplex": {
-        "enabled": true
-      }
+      "sniff_override_destination": true
     }
   ],
   "outbounds": [
     {
-      "type": "direct"
+      "type": "shadowsocks",
+      "tag": "proxy",
+      "method": "2022-blake3-aes-128-gcm",
+      "password": "0ZyWm9T22bnxMAd2KUTLPA==",
+      "server": "57.154.177.170",
+      "server_port": 62608,
+      "detour": "",
+      "udp_over_tcp": false
     },
     {
-      "type": "dns",
-      "tag": "dns-out"
+      "type": "direct",
+      "tag": "direct"
+    },
+    {
+      "type": "block",
+      "tag": "block"
     }
   ],
   "route": {
+    "rule_set": [
+      {
+        "tag": "geosite-geolocation-cn",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-geolocation-cn.srs",
+        "download_detour": "proxy"
+      },
+      {
+        "tag": "geosite-geolocation-!cn",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-geolocation-!cn.srs",
+        "download_detour": "proxy"
+      },
+      {
+        "tag": "geoip-cn",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-cn.srs",
+        "download_detour": "proxy"
+      },
+      {
+        "tag": "geoip-us",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-us.srs",
+        "download_detour": "proxy"
+      }
+    ],
     "rules": [
       {
-        "protocol": "dns",
-        "outbound": "dns-out"
+        "ip_is_private": true,
+        "outbound": "direct"
+      },
+      {
+        "rule_set": "geoip-cn",
+        "outbound": "direct"
+      },
+      {
+        "rule_set": "geoip-us",
+        "outbound": "block"
+      },
+      {
+        "rule_set": "geosite-geolocation-cn",
+        "outbound": "direct"
+      },
+      {
+        "rule_set": "geosite-geolocation-!cn",
+        "outbound": "proxy"
+      },
+      {
+        "outbound": "proxy"
       }
     ]
   }
